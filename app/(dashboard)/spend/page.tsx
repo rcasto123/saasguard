@@ -34,6 +34,11 @@ export default async function SpendPage() {
           <h1 className="text-xl font-bold text-slate-900">Spend</h1>
           <p className="text-sm text-slate-500">${totalSpend.toLocaleString()} total in the last 12 months</p>
         </div>
+        {session?.user.role === "admin" && (
+          <a href="/spend/upload" className="text-sm text-indigo-600 hover:underline">
+            Upload CSV
+          </a>
+        )}
       </div>
       <div className="bg-white rounded-lg border border-slate-200 p-4">
         <h2 className="text-sm font-semibold text-slate-900 mb-3">Monthly Trend</h2>
