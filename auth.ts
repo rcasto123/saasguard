@@ -6,7 +6,7 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
 import { authConfig } from "@/auth.config";
-import { verifyPassword } from "@/lib/password";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import type { UserRole } from "@prisma/client";
 
 const ALLOWED_DOMAIN = process.env.ALLOWED_EMAIL_DOMAIN;
@@ -54,8 +54,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!adminPassword || password !== adminPassword) return null;
         const adminCount = await db.user.count({ where: { role: "admin" } });
         if (adminCount > 0) return null; // Bootstrap disabled once any admin exists
+        // Hash the bootstrap password so the account is usable on subsequent logins
+        const passwordHash = await hashPassword(adminPassword);
         const created = await db.user.create({
-          data: { email, name: email.split("@")[0], role: "admin" },
+          data: { email, name: email.split("@")[0], role: "admin", passwordHash },
         });
         return { id: created.id, email: created.email, name: created.name ?? email };
       },
