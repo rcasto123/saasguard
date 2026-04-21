@@ -138,12 +138,14 @@ model SpendRecord {
   currency     String      @default("USD")
   period       DateTime
   source       SpendSource
+  sourceId     String?     // external transaction ID (e.g. Stripe charge ID)
   merchantName String
   department   String?
   employeeId   String?
   employee     User?       @relation(fields: [employeeId], references: [id])
   createdAt    DateTime    @default(now())
 
+  @@unique([source, sourceId])
   @@index([appId, period])
   @@index([employeeId])
   @@index([period])

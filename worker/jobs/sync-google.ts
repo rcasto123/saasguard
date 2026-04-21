@@ -14,36 +14,41 @@ export async function handleGoogleSync(connectorId: string) {
   let syncErrors = 0;
 
   for (const gsuiteUser of users) {
-    const dbUser = await db.user.upsert({
-      where: { email: gsuiteUser.primaryEmail },
-      create: { email: gsuiteUser.primaryEmail, name: gsuiteUser.name?.fullName ?? gsuiteUser.primaryEmail },
-      update: { name: gsuiteUser.name?.fullName ?? gsuiteUser.primaryEmail },
-    });
+    try {
+      const dbUser = await db.user.upsert({
+        where: { email: gsuiteUser.primaryEmail },
+        create: { email: gsuiteUser.primaryEmail, name: gsuiteUser.name?.fullName ?? gsuiteUser.primaryEmail },
+        update: { name: gsuiteUser.name?.fullName ?? gsuiteUser.primaryEmail },
+      });
 
-    const grants = await listUserTokens(auth, gsuiteUser.primaryEmail);
-    for (const grant of grants) {
-      const domain = extractDomainFromUrl(grant.clientId) ?? `oauth:${grant.clientId}`;
-      const appName = grant.displayText || domain;
-      const existingApp = await db.app.findUnique({ where: { domain } });
-      let app = existingApp;
+      const grants = await listUserTokens(auth, gsuiteUser.primaryEmail);
+      for (const grant of grants) {
+        const domain = extractDomainFromUrl(grant.clientId) ?? `oauth:${grant.clientId}`;
+        const appName = grant.displayText || domain;
+        const existingApp = await db.app.findUnique({ where: { domain } });
+        let app = existingApp;
 
-      if (!app) {
-        const riskScore = calculateRiskScore(grant.scopes);
-        app = await db.app.create({
-          data: { name: appName, domain, status: "shadow", riskScore, discoveredBy: "google_workspace" },
-        });
-        await createAlert({
-          type: "new_shadow_app",
-          severity: riskScore >= 70 ? "high" : riskScore >= 40 ? "medium" : "low",
-          payload: { appId: app.id, appName, domain, discoveredFor: gsuiteUser.primaryEmail, riskScore },
+        if (!app) {
+          const riskScore = calculateRiskScore(grant.scopes);
+          app = await db.app.create({
+            data: { name: appName, domain, status: "shadow", riskScore, discoveredBy: "google_workspace" },
+          });
+          await createAlert({
+            type: "new_shadow_app",
+            severity: riskScore >= 70 ? "high" : riskScore >= 40 ? "medium" : "low",
+            payload: { appId: app.id, appName, domain, discoveredFor: gsuiteUser.primaryEmail, riskScore },
+          });
+        }
+
+        await db.appUser.upsert({
+          where: { appId_userId: { appId: app.id, userId: dbUser.id } },
+          create: { appId: app.id, userId: dbUser.id, grantType: "oauth", scopes: grant.scopes, isActive: true },
+          update: { scopes: grant.scopes, lastSeen: new Date(), isActive: true },
         });
       }
-
-      await db.appUser.upsert({
-        where: { appId_userId: { appId: app.id, userId: dbUser.id } },
-        create: { appId: app.id, userId: dbUser.id, grantType: "oauth", scopes: grant.scopes, isActive: true },
-        update: { scopes: grant.scopes, lastSeen: new Date(), isActive: true },
-      });
+    } catch (err) {
+      syncErrors++;
+      console.error(`[sync-google] Error processing user ${gsuiteUser.primaryEmail}:`, (err as Error).message);
     }
   }
 

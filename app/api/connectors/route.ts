@@ -4,6 +4,7 @@ import { encrypt } from "@/lib/crypto";
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import type { ConnectorType } from "@prisma/client";
+import { CronExpressionParser } from "cron-parser";
 
 export async function GET() {
   const session = await auth();
@@ -25,6 +26,13 @@ export async function POST(request: Request) {
   const body = await request.json() as { type: ConnectorType; credentials: Record<string, string>; config?: Record<string, unknown>; syncFrequency?: string };
   if (!body.type || !body.credentials) {
     return NextResponse.json({ error: "type and credentials are required" }, { status: 400 });
+  }
+  if (body.syncFrequency) {
+    try {
+      CronExpressionParser.parse(body.syncFrequency);
+    } catch {
+      return NextResponse.json({ error: "Invalid cron expression for syncFrequency" }, { status: 400 });
+    }
   }
   const credentialsEnc = encrypt(JSON.stringify(body.credentials));
   const connector = await db.connector.upsert({
