@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import nodemailer from "nodemailer";
+import { Prisma } from "@prisma/client";
 import type { AlertType, AlertSeverity } from "@prisma/client";
 
 export async function createAlert(params: {
@@ -11,7 +12,7 @@ export async function createAlert(params: {
     data: {
       type: params.type,
       severity: params.severity,
-      payload: params.payload,
+      payload: params.payload as Prisma.InputJsonValue,
     },
   });
 
