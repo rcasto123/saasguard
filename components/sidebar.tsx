@@ -29,7 +29,7 @@ const NAV_ITEMS: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const role = session?.user?.role ?? "manager";
+  const role = session?.user?.role ?? "finance";
 
   const visible = NAV_ITEMS.filter((item) => item.roles.includes(role));
 

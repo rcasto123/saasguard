@@ -5,7 +5,10 @@ import Okta from "next-auth/providers/okta";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
 
-const ALLOWED_DOMAIN = process.env.ALLOWED_EMAIL_DOMAIN!;
+const ALLOWED_DOMAIN = process.env.ALLOWED_EMAIL_DOMAIN;
+if (!ALLOWED_DOMAIN) {
+  throw new Error("ALLOWED_EMAIL_DOMAIN must be set");
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
@@ -30,13 +33,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         where: { id: user.id },
         select: { role: true, department: true },
       });
+      if (!dbUser) {
+        throw new Error("Session user not found in database");
+      }
       return {
         ...session,
         user: {
           ...session.user,
           id: user.id,
-          role: dbUser?.role ?? "manager",
-          department: dbUser?.department ?? null,
+          role: dbUser.role,
+          department: dbUser.department,
         },
       };
     },

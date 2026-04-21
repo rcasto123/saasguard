@@ -18,7 +18,11 @@ export default auth((req) => {
   // All other routes require login
   if (!isLoggedIn) {
     const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
+    // Only propagate same-origin paths, never full URLs
+    const safe = pathname.startsWith("/") && !pathname.startsWith("//")
+      ? pathname
+      : "/dashboard";
+    loginUrl.searchParams.set("callbackUrl", safe);
     return NextResponse.redirect(loginUrl);
   }
 

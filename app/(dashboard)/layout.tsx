@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // Defense-in-depth: middleware handles the primary redirect, this catches edge cases
   const session = await auth();
   if (!session) redirect("/login");
 
