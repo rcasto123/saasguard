@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import type { UserRole } from "@prisma/client";
+import { INVITE_EXPIRY_DAYS } from "@/lib/constants";
 
 export async function GET() {
   const session = await auth();
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
   if (!email || !role) return NextResponse.json({ error: "email and role required" }, { status: 400 });
 
   const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 7);
+  expiresAt.setDate(expiresAt.getDate() + INVITE_EXPIRY_DAYS);
 
   const invite = await db.invite.create({
     data: { email, role, teamId: teamId || null, expiresAt },

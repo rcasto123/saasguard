@@ -3,6 +3,7 @@ import { createM365Client, listM365Users, listOAuthPermissionGrants, listService
 import { calculateRiskScore } from "@/lib/risk";
 import { createAlert } from "@/lib/alerts";
 import { extractDomainFromUrl } from "@/lib/connectors/google";
+import { RISK_SCORE_HIGH, RISK_SCORE_MEDIUM } from "@/lib/constants";
 
 export async function handleM365Sync(connectorId: string) {
   const connector = await db.connector.findUniqueOrThrow({ where: { id: connectorId } });
@@ -42,7 +43,7 @@ export async function handleM365Sync(connectorId: string) {
       });
       await createAlert({
         type: "new_shadow_app",
-        severity: riskScore >= 70 ? "high" : riskScore >= 40 ? "medium" : "low",
+        severity: riskScore >= RISK_SCORE_HIGH ? "high" : riskScore >= RISK_SCORE_MEDIUM ? "medium" : "low",
         payload: { appId: app.id, appName: sp.displayName, domain, riskScore },
       });
     }
