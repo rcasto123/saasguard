@@ -10,7 +10,7 @@ export function SpendChart({ data }: { data: MonthlyData[] }) {
         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
         <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} />
         <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-        <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, "Spend"]} contentStyle={{ fontSize: 12 }} />
+        <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, "Spend"]} contentStyle={{ fontSize: 12 }} />
         <Bar dataKey="total" fill="#6366f1" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
