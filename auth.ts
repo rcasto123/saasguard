@@ -21,11 +21,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    Okta({
-      clientId: process.env.OKTA_CLIENT_ID!,
-      clientSecret: process.env.OKTA_CLIENT_SECRET!,
-      issuer: process.env.OKTA_ISSUER!,
-    }),
+    ...(process.env.OKTA_ISSUER && !process.env.OKTA_ISSUER.includes("yourcompany")
+      ? [Okta({
+          clientId: process.env.OKTA_CLIENT_ID!,
+          clientSecret: process.env.OKTA_CLIENT_SECRET!,
+          issuer: process.env.OKTA_ISSUER,
+        })]
+      : []),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
