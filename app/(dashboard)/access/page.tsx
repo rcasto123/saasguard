@@ -6,6 +6,9 @@ export default async function AccessPage() {
   const session = await auth();
   const deptFilter = session?.user.role === "manager" && session?.user.department
     ? { user: { department: session.user.department } } : {};
+  const userDeptFilter = session?.user.role === "manager" && session?.user.department
+    ? { department: session.user.department }
+    : {};
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
@@ -17,7 +20,7 @@ export default async function AccessPage() {
       take: 100,
     }),
     db.user.findMany({
-      where: { appUsers: { some: { isActive: true, lastSeen: { lt: thirtyDaysAgo }, ...deptFilter } } },
+      where: { ...userDeptFilter, appUsers: { some: { isActive: true, lastSeen: { lt: thirtyDaysAgo } } } },
       select: { id: true, email: true, name: true, department: true, appUsers: { where: { isActive: true }, select: { app: { select: { name: true, domain: true } }, lastSeen: true } } },
       take: 20,
     }),

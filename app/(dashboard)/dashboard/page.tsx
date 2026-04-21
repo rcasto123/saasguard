@@ -1,14 +1,20 @@
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { AppStatusBadge } from "@/components/app-status-badge";
 import { RiskBadge } from "@/components/risk-badge";
 import { formatDistanceToNow } from "date-fns";
+import type { Session } from "next-auth";
 
-async function getStats() {
+type SessionUser = Session["user"];
+
+async function getStats(user: SessionUser) {
+  const isManager = user.role === "manager" && user.department;
+  const deptUserWhere = isManager ? { department: user.department! } : {};
   const [totalApps, shadowApps, unresolvedAlerts, offboardingCount] = await Promise.all([
     db.app.count(),
     db.app.count({ where: { status: "shadow" } }),
     db.alert.count({ where: { resolvedAt: null } }),
-    db.user.count({ where: { appUsers: { some: { isActive: true, lastSeen: { lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } } } }),
+    db.user.count({ where: { ...deptUserWhere, appUsers: { some: { isActive: true, lastSeen: { lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } } } }),
   ]);
   const monthlySpend = await db.spendRecord.aggregate({
     _sum: { amount: true },
@@ -17,18 +23,24 @@ async function getStats() {
   return { totalApps, shadowApps, unresolvedAlerts, offboardingCount, monthlySpend: Number(monthlySpend._sum.amount ?? 0) };
 }
 
-async function getRecentShadowApps() {
+async function getRecentShadowApps(user: SessionUser) {
+  const isManager = user.role === "manager" && user.department;
+  const deptWhere = isManager
+    ? { appUsers: { some: { user: { department: user.department! }, isActive: true } } }
+    : {};
   return db.app.findMany({
-    where: { status: { in: ["shadow", "review"] } },
+    where: { status: { in: ["shadow", "review"] }, ...deptWhere },
     orderBy: { discoveredAt: "desc" },
     take: 5,
     select: { id: true, name: true, domain: true, status: true, riskScore: true, discoveredAt: true, _count: { select: { appUsers: { where: { isActive: true } } } } },
   });
 }
 
-async function getTopSpend() {
+async function getTopSpend(user: SessionUser) {
+  const isManager = user.role === "manager" && user.department;
+  const deptWhere = isManager ? { department: user.department! } : {};
   const records = await db.spendRecord.findMany({
-    where: { period: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+    where: { period: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, ...deptWhere },
     include: { app: { select: { name: true } } },
   });
   const byApp = records.reduce<Record<string, { name: string; total: number }>>((acc, r) => {
@@ -41,7 +53,8 @@ async function getTopSpend() {
 }
 
 export default async function DashboardPage() {
-  const [stats, recentShadow, topSpend] = await Promise.all([getStats(), getRecentShadowApps(), getTopSpend()]);
+  const session = await auth();
+  const [stats, recentShadow, topSpend] = await Promise.all([getStats(session!.user), getRecentShadowApps(session!.user), getTopSpend(session!.user)]);
 
   return (
     <div className="space-y-6">

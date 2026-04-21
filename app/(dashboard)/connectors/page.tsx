@@ -1,3 +1,5 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { ConnectorCard } from "@/components/connector-card";
 import { ConnectorForm } from "@/components/connector-form";
@@ -6,6 +8,9 @@ import type { ConnectorType } from "@prisma/client";
 const ALL_TYPES: ConnectorType[] = ["google_workspace", "microsoft_365", "okta", "onepassword", "stripe", "brex", "ramp", "csv"];
 
 export default async function ConnectorsPage() {
+  const session = await auth();
+  if (session?.user.role !== "admin") redirect("/dashboard");
+
   const connectors = await db.connector.findMany({
     select: { id: true, type: true, status: true, lastSyncAt: true, lastSyncStatus: true },
   });

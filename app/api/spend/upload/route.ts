@@ -15,22 +15,32 @@ export async function POST(request: Request) {
   const text = await file.text();
   const transactions = parseCSVTransactions(text);
 
-  let imported = 0;
-  let skipped = 0;
+  // Separate valid from invalid transactions upfront
+  const validTxs = transactions.filter((tx) => !isNaN(tx.amount) && !!tx.merchantName);
+  const skipped = transactions.length - validTxs.length;
 
-  for (const tx of transactions) {
-    if (isNaN(tx.amount) || !tx.merchantName) { skipped++; continue; }
+  // Collect all unique domains and emails for bulk lookup
+  const uniqueDomains = [...new Set(validTxs.map((tx) => merchantToDomain(tx.merchantName)).filter(Boolean) as string[])];
+  const uniqueEmails = [...new Set(validTxs.map((tx) => tx.cardholderEmail).filter(Boolean) as string[])];
+
+  // Single bulk query for domains → app map
+  const apps = uniqueDomains.length > 0
+    ? await db.app.findMany({ where: { domain: { in: uniqueDomains } }, select: { id: true, domain: true } })
+    : [];
+  const domainToAppId = new Map(apps.map((a) => [a.domain, a.id]));
+
+  // Single bulk query for emails → user map
+  const users = uniqueEmails.length > 0
+    ? await db.user.findMany({ where: { email: { in: uniqueEmails } }, select: { id: true, email: true } })
+    : [];
+  const emailToUserId = new Map(users.map((u) => [u.email, u.id]));
+
+  // Create all spend records using the pre-built maps
+  let imported = 0;
+  for (const tx of validTxs) {
     const domain = merchantToDomain(tx.merchantName);
-    let appId: string | null = null;
-    if (domain) {
-      const app = await db.app.findUnique({ where: { domain } });
-      appId = app?.id ?? null;
-    }
-    let employeeId: string | null = null;
-    if (tx.cardholderEmail) {
-      const user = await db.user.findUnique({ where: { email: tx.cardholderEmail } });
-      employeeId = user?.id ?? null;
-    }
+    const appId = domain ? (domainToAppId.get(domain) ?? null) : null;
+    const employeeId = tx.cardholderEmail ? (emailToUserId.get(tx.cardholderEmail) ?? null) : null;
     await db.spendRecord.create({
       data: { appId, amount: tx.amount, currency: tx.currency, period: tx.date, source: "csv", merchantName: tx.merchantName, employeeId },
     });

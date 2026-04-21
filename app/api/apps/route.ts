@@ -8,7 +8,9 @@ export async function GET(request: Request) {
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(request.url);
-  const status = searchParams.get("status") as AppStatus | null;
+  const VALID_STATUSES: AppStatus[] = ["shadow", "review", "managed", "denied"];
+  const rawStatus = searchParams.get("status");
+  const status = rawStatus && VALID_STATUSES.includes(rawStatus as AppStatus) ? (rawStatus as AppStatus) : null;
   const category = searchParams.get("category");
   const search = searchParams.get("search");
 
