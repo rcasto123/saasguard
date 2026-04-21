@@ -1,5 +1,8 @@
 import { db } from "@/lib/db";
 import { getOktaCredentials, listApps, listUsers, listAppUsers, extractAppDomain } from "@/lib/connectors/okta";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("sync-okta");
 
 export async function handleOktaSync(connectorId: string) {
   const connector = await db.connector.findUniqueOrThrow({ where: { id: connectorId } });
@@ -42,5 +45,5 @@ export async function handleOktaSync(connectorId: string) {
   }
 
   await db.connector.update({ where: { id: connectorId }, data: { lastSyncAt: new Date(), lastSyncStatus: "success", status: "active" } });
-  console.log(`[sync-okta] Done. ${oktaApps.length} apps, ${oktaUsers.length} users processed.`);
+  log.info({ apps: oktaApps.length, users: oktaUsers.length }, "sync complete");
 }

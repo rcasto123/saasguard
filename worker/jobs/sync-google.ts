@@ -3,6 +3,9 @@ import { createGoogleAuthClient, listDirectoryUsers, listUserTokens, extractDoma
 import { calculateRiskScore } from "@/lib/risk";
 import { createAlert } from "@/lib/alerts";
 import { RISK_SCORE_HIGH, RISK_SCORE_MEDIUM } from "@/lib/constants";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("sync-google");
 
 export async function handleGoogleSync(connectorId: string) {
   const connector = await db.connector.findUniqueOrThrow({ where: { id: connectorId } });
@@ -33,7 +36,7 @@ export async function handleGoogleSync(connectorId: string) {
       }
     } catch (err) {
       syncErrors++;
-      console.error(`[sync-google] Error processing user ${gsuiteUser.primaryEmail}:`, (err as Error).message);
+      log.error({ email: gsuiteUser.primaryEmail, err: (err as Error).message }, "error processing user");
     }
   }
 
@@ -68,7 +71,7 @@ export async function handleGoogleSync(connectorId: string) {
       });
     } catch (err) {
       syncErrors++;
-      console.error(`[sync-google] Error processing grant for domain ${domain}:`, (err as Error).message);
+      log.error({ domain, err: (err as Error).message }, "error processing grant");
     }
   }
 
@@ -76,5 +79,5 @@ export async function handleGoogleSync(connectorId: string) {
     where: { id: connectorId },
     data: { lastSyncAt: new Date(), lastSyncStatus: syncErrors === 0 ? "success" : "partial", status: "active" },
   });
-  console.log(`[sync-google] Done. ${users.length} users, ${allGrantsWithUser.length} grants processed.`);
+  log.info({ users: users.length, grants: allGrantsWithUser.length }, "sync complete");
 }

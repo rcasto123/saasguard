@@ -1,6 +1,9 @@
 import { db } from "@/lib/db";
 import { getStripeCredentials, fetchStripeCharges, merchantToDomain } from "@/lib/connectors/cardfeed";
 import type { ConnectorType } from "@prisma/client";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("sync-cardfeed");
 
 export async function handleCardFeedSync(connectorId: string, connectorType: ConnectorType) {
   const connector = await db.connector.findUniqueOrThrow({ where: { id: connectorId } });
@@ -56,5 +59,5 @@ async function syncStripe(connectorId: string, credentialsEnc: string, since: Da
       },
     });
   }
-  console.log(`[sync-cardfeed] Stripe: ${charges.length} charges ingested.`);
+  log.info({ charges: charges.length }, "Stripe sync complete");
 }

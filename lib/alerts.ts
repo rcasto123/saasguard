@@ -2,6 +2,9 @@ import { db } from "@/lib/db";
 import nodemailer from "nodemailer";
 import { Prisma } from "@prisma/client";
 import type { AlertType, AlertSeverity } from "@prisma/client";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("alerts");
 
 // Lazily initialized module-level transporter to avoid creating a new connection per alert
 let _transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
@@ -34,7 +37,7 @@ export async function createAlert(params: {
 
   if (params.severity === "high" || params.severity === "medium") {
     await sendAlertEmail(params.type, params.payload).catch((err) => {
-      console.error("[alerts] email send failed:", err.message);
+      log.error({ err: err.message }, "alert email send failed");
     });
   }
 

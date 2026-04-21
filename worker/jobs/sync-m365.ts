@@ -4,6 +4,9 @@ import { calculateRiskScore } from "@/lib/risk";
 import { createAlert } from "@/lib/alerts";
 import { extractDomainFromUrl } from "@/lib/connectors/google";
 import { RISK_SCORE_HIGH, RISK_SCORE_MEDIUM } from "@/lib/constants";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("sync-m365");
 
 export async function handleM365Sync(connectorId: string) {
   const connector = await db.connector.findUniqueOrThrow({ where: { id: connectorId } });
@@ -85,5 +88,5 @@ export async function handleM365Sync(connectorId: string) {
     where: { id: connectorId },
     data: { lastSyncAt: new Date(), lastSyncStatus: "success", status: "active" },
   });
-  console.log(`[sync-m365] Done. ${grants.length} grants processed.`);
+  log.info({ grants: grants.length }, "sync complete");
 }

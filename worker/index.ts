@@ -8,6 +8,9 @@ import { handleOnePasswordSync } from "./jobs/sync-onepassword";
 import { handleCardFeedSync } from "./jobs/sync-cardfeed";
 import { db } from "@/lib/db";
 import type { ConnectorType } from "@prisma/client";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("worker");
 
 const CARD_FEED_TYPES = new Set<ConnectorType>(["stripe", "brex", "ramp", "csv"]);
 
@@ -31,11 +34,11 @@ const worker = new Worker(
 );
 
 worker.on("completed", (job) => {
-  console.log(`[worker] ✓ ${job.name} (job ${job.id}) completed`);
+  log.info({ jobName: job.name, jobId: job.id }, "job completed");
 });
 
 worker.on("failed", async (job, err) => {
-  console.error(`[worker] ✗ ${job?.name} failed: ${err.message}`);
+  log.error({ jobName: job?.name, jobId: job?.id, err: err.message }, "job failed");
   if (job?.data?.connectorId) {
     await db.connector.update({ where: { id: job.data.connectorId }, data: { status: "error", lastSyncStatus: "failed" } }).catch(() => null);
   }
@@ -47,4 +50,4 @@ process.on("SIGTERM", async () => {
   process.exit(0);
 });
 
-console.log("[worker] SaaSGuard worker started. Waiting for jobs...");
+log.info("SaaSGuard worker started. Waiting for jobs...");
