@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { parseCSVTransactions, merchantToDomain } from "@/lib/connectors/cardfeed";
+import { UPLOAD_MAX_BYTES } from "@/lib/constants";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -11,6 +12,12 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  if (file.size > UPLOAD_MAX_BYTES) {
+    return NextResponse.json(
+      { error: `File too large. Maximum size is ${UPLOAD_MAX_BYTES / 1024 / 1024} MB.` },
+      { status: 413 }
+    );
+  }
 
   const text = await file.text();
   const transactions = parseCSVTransactions(text);
