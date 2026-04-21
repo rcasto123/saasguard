@@ -4,6 +4,8 @@ import Google from "next-auth/providers/google";
 import Okta from "next-auth/providers/okta";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
+import { authConfig } from "@/auth.config";
+import type { UserRole } from "@prisma/client";
 
 const ALLOWED_DOMAIN = process.env.ALLOWED_EMAIL_DOMAIN;
 if (!ALLOWED_DOMAIN) {
@@ -11,6 +13,7 @@ if (!ALLOWED_DOMAIN) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(db),
   providers: [
     Google({
@@ -28,28 +31,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!user.email) return false;
       return user.email.endsWith(`@${ALLOWED_DOMAIN}`);
     },
-    async session({ session, user }) {
-      const dbUser = await db.user.findUnique({
-        where: { id: user.id },
-        select: { role: true, department: true },
-      });
-      if (!dbUser) {
-        throw new Error("Session user not found in database");
+    async jwt({ token, user }) {
+      if (user?.id) {
+        const dbUser = await db.user.findUnique({
+          where: { id: user.id },
+          select: { role: true, department: true },
+        });
+        if (dbUser) {
+          token.id = user.id;
+          token.role = dbUser.role;
+          token.department = dbUser.department ?? null;
+        }
       }
+      return token;
+    },
+    async session({ session, token }) {
       return {
         ...session,
         user: {
           ...session.user,
-          id: user.id,
-          role: dbUser.role,
-          department: dbUser.department,
+          id: token.id as string,
+          role: token.role as UserRole,
+          department: token.department ?? null,
         },
       };
     },
   },
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
-  session: { strategy: "database" },
+  session: { strategy: "jwt" },
 });
