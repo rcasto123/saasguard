@@ -7,7 +7,11 @@ function getKey(): Buffer {
   if (!hex || hex.length !== 64) {
     throw new Error("CREDENTIAL_ENCRYPTION_KEY must be a 64-char hex string (32 bytes)");
   }
-  return Buffer.from(hex, "hex");
+  const key = Buffer.from(hex, "hex");
+  if (key.length !== 32) {
+    throw new Error("CREDENTIAL_ENCRYPTION_KEY contains non-hex characters");
+  }
+  return key;
 }
 
 export function encrypt(plaintext: string): string {
@@ -28,6 +32,7 @@ export function decrypt(ciphertext: string): string {
   const authTag = Buffer.from(authTagHex, "hex");
   const encrypted = Buffer.from(encryptedHex, "hex");
   const decipher = createDecipheriv(ALGORITHM, key, iv);
+  if (authTag.length !== 16) throw new Error("Invalid ciphertext format");
   decipher.setAuthTag(authTag);
-  return decipher.update(encrypted) + decipher.final("utf8");
+  return decipher.update(encrypted).toString("utf8") + decipher.final("utf8");
 }

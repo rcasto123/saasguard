@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 
 // Set env before importing the module
-process.env.CREDENTIAL_ENCRYPTION_KEY = "a".repeat(64); // 32 bytes as hex
+// 32-byte test key (all 0xAA); valid hex, never use in production
+process.env.CREDENTIAL_ENCRYPTION_KEY = "aa".repeat(32);
 
 const { encrypt, decrypt } = await import("@/lib/crypto");
 
@@ -19,8 +20,9 @@ describe("crypto", () => {
   });
 
   it("throws if ciphertext is tampered", () => {
-    const ciphertext = encrypt("valid");
-    const tampered = ciphertext.slice(0, -4) + "0000";
-    expect(() => decrypt(tampered)).toThrow();
+    const ct = encrypt("valid");
+    const [iv, tag, enc] = ct.split(":");
+    const badTag = tag.slice(0, -2) + (tag.endsWith("00") ? "01" : "00");
+    expect(() => decrypt([iv, badTag, enc].join(":"))).toThrow();
   });
 });
