@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { AppStatusBadge } from "@/components/app-status-badge";
 import { RiskBadge } from "@/components/risk-badge";
 import { formatDistanceToNow } from "date-fns";
+import { redirect } from "next/navigation";
 import type { Session } from "next-auth";
 
 type SessionUser = Session["user"];
@@ -54,7 +55,8 @@ async function getTopSpend(user: SessionUser) {
 
 export default async function DashboardPage() {
   const session = await auth();
-  const [stats, recentShadow, topSpend] = await Promise.all([getStats(session!.user), getRecentShadowApps(session!.user), getTopSpend(session!.user)]);
+  if (!session) redirect("/login");
+  const [stats, recentShadow, topSpend] = await Promise.all([getStats(session.user), getRecentShadowApps(session.user), getTopSpend(session.user)]);
 
   return (
     <div className="space-y-6">
