@@ -75,13 +75,14 @@ model User {
   id            String    @id @default(uuid())
   email         String    @unique
   name          String    @default("")
-  role          UserRole  @default(admin)
+  role          UserRole  @default(manager)
   department    String?
   managerId     String?
   manager       User?     @relation("UserManager", fields: [managerId], references: [id])
   reports       User[]    @relation("UserManager")
   appUsers      AppUser[]
   spendRecords  SpendRecord[]
+  alerts        Alert[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -104,8 +105,12 @@ model App {
   appUsers     AppUser[]
   spendRecords SpendRecord[]
   licenses     License[]
+  alerts       Alert[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+
+  @@index([status])
+  @@index([riskScore])
 }
 
 model AppUser {
@@ -121,6 +126,8 @@ model AppUser {
   isActive  Boolean   @default(true)
 
   @@unique([appId, userId])
+  @@index([userId])
+  @@index([isActive])
 }
 
 model SpendRecord {
@@ -136,6 +143,10 @@ model SpendRecord {
   employeeId   String?
   employee     User?       @relation(fields: [employeeId], references: [id])
   createdAt    DateTime    @default(now())
+
+  @@index([appId, period])
+  @@index([employeeId])
+  @@index([period])
 }
 
 model License {
@@ -156,6 +167,7 @@ model Connector {
   id             String          @id @default(uuid())
   type           ConnectorType   @unique
   status         ConnectorStatus @default(pending)
+  /// Always store encrypted via lib/crypto.ts encrypt(). Never write plaintext.
   credentialsEnc String?
   lastSyncAt     DateTime?
   lastSyncStatus SyncStatus?
@@ -172,6 +184,16 @@ model Alert {
   payload    Json
   resolvedAt DateTime?
   createdAt  DateTime      @default(now())
+
+  // Optional typed relations for queryable alerts
+  appId      String?
+  app        App?          @relation(fields: [appId], references: [id], onDelete: SetNull)
+  userId     String?
+  user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([resolvedAt])
+  @@index([severity])
 }
 
 // --- NextAuth required models ---
