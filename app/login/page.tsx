@@ -2,6 +2,8 @@
 import { signIn } from "@/auth";
 import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 export default async function LoginPage({
   searchParams,
@@ -73,11 +75,16 @@ export default async function LoginPage({
           <form
             action={async (formData: FormData) => {
               "use server";
-              await signIn("credentials", {
-                email: formData.get("email") as string,
-                password: formData.get("password") as string,
-                redirectTo: "/dashboard",
-              });
+              try {
+                await signIn("credentials", {
+                  email: formData.get("email") as string,
+                  password: formData.get("password") as string,
+                  redirectTo: "/dashboard",
+                });
+              } catch (e) {
+                if (isRedirectError(e)) throw e;
+                redirect("/login?error=credentials");
+              }
             }}
             className="flex flex-col gap-2"
           >
