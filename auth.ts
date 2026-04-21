@@ -2,6 +2,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Okta from "next-auth/providers/okta";
+import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
 import { authConfig } from "@/auth.config";
@@ -25,9 +26,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.OKTA_CLIENT_SECRET!,
       issuer: process.env.OKTA_ISSUER!,
     }),
+    Credentials({
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = credentials?.email as string | undefined;
+        const password = credentials?.password as string | undefined;
+        const adminPassword = process.env.ADMIN_PASSWORD;
+        if (!email || !password || !adminPassword) return null;
+        if (password !== adminPassword) return null;
+        // Find or create the user
+        let user = await db.user.findUnique({ where: { email } });
+        if (!user) {
+          user = await db.user.create({
+            data: { email, name: email.split("@")[0], role: "admin" },
+          });
+        }
+        return { id: user.id, email: user.email, name: user.name ?? email };
+      },
+    }),
   ],
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account }) {
+      // Credentials logins bypass domain check (already validated in authorize)
+      if (account?.provider === "credentials") return true;
       if (!user.email) return false;
       return user.email.endsWith(`@${ALLOWED_DOMAIN}`);
     },

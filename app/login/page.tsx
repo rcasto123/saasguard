@@ -60,6 +60,45 @@ export default async function LoginPage({
               Sign in with Okta
             </Button>
           </form>
+
+          <div className="relative my-1">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-white px-2 text-slate-400">or</span>
+            </div>
+          </div>
+
+          <form
+            action={async (formData: FormData) => {
+              "use server";
+              await signIn("credentials", {
+                email: formData.get("email") as string,
+                password: formData.get("password") as string,
+                redirectTo: "/dashboard",
+              });
+            }}
+            className="flex flex-col gap-2"
+          >
+            <input
+              type="email"
+              name="email"
+              placeholder="you@company.com"
+              required
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              required
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <Button type="submit" className="w-full">
+              Sign in with Email
+            </Button>
+          </form>
         </div>
       </div>
     </div>
