@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const users = await db.user.findMany({
-    select: { id: true, email: true, name: true, role: true, department: true, createdAt: true, _count: { select: { appUsers: { where: { isActive: true } } } } },
+    select: { id: true, email: true, name: true, role: true, department: true, teamId: true, isActive: true, createdAt: true, _count: { select: { appUsers: { where: { isActive: true } } } } },
     orderBy: { email: "asc" },
   });
   return NextResponse.json(users);

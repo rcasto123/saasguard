@@ -77,6 +77,10 @@ model User {
   name          String    @default("")
   role          UserRole  @default(manager)
   department    String?
+  isActive      Boolean   @default(true)
+  passwordHash  String?
+  teamId        String?
+  team          Team?     @relation(fields: [teamId], references: [id])
   managerId     String?
   manager       User?     @relation("UserManager", fields: [managerId], references: [id])
   reports       User[]    @relation("UserManager")
@@ -91,6 +95,31 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+}
+
+model Team {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  members     User[]
+  invites     Invite[]
+}
+
+model Invite {
+  id        String    @id @default(uuid())
+  email     String
+  token     String    @unique @default(uuid())
+  role      UserRole  @default(manager)
+  teamId    String?
+  team      Team?     @relation(fields: [teamId], references: [id])
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([email])
 }
 
 model App {
