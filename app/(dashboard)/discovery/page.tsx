@@ -25,8 +25,13 @@ export default async function DiscoveryPage() {
       </div>
       {apps.length === 0 && (
         <div className="text-center py-16 text-slate-400">
-          <p className="text-lg font-medium">No shadow apps found</p>
-          <p className="text-sm mt-1">Connect Google Workspace or Microsoft 365 to start discovering apps.</p>
+          <p className="text-base font-medium text-slate-600 mb-1">No shadow apps found</p>
+          <p className="text-sm text-slate-400 mb-3">
+            Connect Google Workspace or Microsoft 365 to start discovering unauthorized apps.
+          </p>
+          <a href="/connectors" className="text-sm text-indigo-600 hover:underline font-medium">
+            Set up a connector →
+          </a>
         </div>
       )}
       <div className="space-y-3">

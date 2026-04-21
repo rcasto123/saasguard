@@ -54,29 +54,41 @@ export default async function AccessPage() {
           </div>
         </div>
       )}
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="px-4 py-3 border-b border-slate-100"><h2 className="text-sm font-semibold text-slate-900">Active Access</h2></div>
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50"><tr>
-            <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase">User</th>
-            <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase">App</th>
-            <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase">Last Seen</th>
-            <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase">Grant</th>
-            <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
-          </tr></thead>
-          <tbody className="divide-y divide-slate-100">
-            {activeAccess.map((au) => (
-              <tr key={au.id} className={`hover:bg-slate-50 ${au.lastSeen < ninetyDaysAgo ? "bg-yellow-50" : ""}`}>
-                <td className="px-4 py-3"><p className="font-medium text-slate-900">{au.user.name}</p><p className="text-xs text-slate-400">{au.user.email}</p></td>
-                <td className="px-4 py-3"><p className="text-slate-900">{au.app.name}</p><p className="text-xs text-slate-400">{au.app.domain}</p></td>
-                <td className="px-4 py-3 text-slate-500 text-xs">{formatDistanceToNow(au.lastSeen, { addSuffix: true })}</td>
-                <td className="px-4 py-3"><span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full capitalize">{au.grantType}</span></td>
-                <td className="px-4 py-3">{au.lastSeen < ninetyDaysAgo ? <span className="text-xs text-yellow-700 font-medium">Stale</span> : <span className="text-xs text-green-700">Active</span>}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {activeAccess.length === 0 ? (
+        <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
+          <p className="text-sm font-medium text-slate-600 mb-1">No access data yet</p>
+          <p className="text-xs text-slate-400 mb-3">
+            Connect Google Workspace or Microsoft 365 to track which users have access to which apps.
+          </p>
+          <a href="/connectors" className="text-xs text-indigo-600 hover:underline font-medium">
+            Set up a connector →
+          </a>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg border border-slate-200">
+          <div className="px-4 py-3 border-b border-slate-100"><h2 className="text-sm font-semibold text-slate-900">Active Access</h2></div>
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50"><tr>
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase">User</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase">App</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase">Last Seen</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase">Grant</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+            </tr></thead>
+            <tbody className="divide-y divide-slate-100">
+              {activeAccess.map((au) => (
+                <tr key={au.id} className={`hover:bg-slate-50 ${au.lastSeen < ninetyDaysAgo ? "bg-yellow-50" : ""}`}>
+                  <td className="px-4 py-3"><p className="font-medium text-slate-900">{au.user.name}</p><p className="text-xs text-slate-400">{au.user.email}</p></td>
+                  <td className="px-4 py-3"><p className="text-slate-900">{au.app.name}</p><p className="text-xs text-slate-400">{au.app.domain}</p></td>
+                  <td className="px-4 py-3 text-slate-500 text-xs">{formatDistanceToNow(au.lastSeen, { addSuffix: true })}</td>
+                  <td className="px-4 py-3"><span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full capitalize">{au.grantType}</span></td>
+                  <td className="px-4 py-3">{au.lastSeen < ninetyDaysAgo ? <span className="text-xs text-yellow-700 font-medium">Stale</span> : <span className="text-xs text-green-700">Active</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
