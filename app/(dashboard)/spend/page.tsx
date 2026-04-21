@@ -27,6 +27,26 @@ export default async function SpendPage() {
   const topApps = Object.values(byApp).sort((a, b) => b.total - a.total).slice(0, 10);
   const totalSpend = records.reduce((sum, r) => sum + Number(r.amount), 0);
 
+  if (records.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-xl font-bold text-slate-900">Spend</h1>
+        <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
+          <p className="text-sm font-medium text-slate-600 mb-1">No spend data yet</p>
+          <p className="text-xs text-slate-400 mb-3">
+            Connect Stripe, Brex, or Ramp to automatically import transactions, or upload a CSV.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <a href="/connectors" className="text-xs text-indigo-600 hover:underline font-medium">Set up a connector →</a>
+            {session?.user.role === "admin" && (
+              <a href="/spend/upload" className="text-xs text-indigo-600 hover:underline font-medium">Upload CSV →</a>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">

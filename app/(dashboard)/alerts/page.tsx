@@ -33,6 +33,7 @@ export default function AlertsPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [resolving, setResolving] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState<string | null>(null);
 
   useEffect(() => { load(); }, []);
 
@@ -53,6 +54,19 @@ export default function AlertsPage() {
   async function resolveAll() {
     await Promise.all(alerts.map((a) => fetch(`/api/alerts/${a.id}`, { method: "PATCH" })));
     setAlerts([]);
+  }
+
+  async function revokeAccess(alertId: string, userId: string, appId: string) {
+    setRevoking(alertId);
+    await fetch("/api/access/revoke", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, appId }),
+    });
+    // Also resolve the alert after revoking
+    await fetch(`/api/alerts/${alertId}`, { method: "PATCH" });
+    setAlerts((prev) => prev.filter((a) => a.id !== alertId));
+    setRevoking(null);
   }
 
   const high = alerts.filter((a) => a.severity === "high");
@@ -116,6 +130,18 @@ export default function AlertsPage() {
                         {formatDistanceToNow(new Date(alert.createdAt), { addSuffix: true })}
                       </p>
                     </div>
+                    {(alert.type === "offboarding_risk" || alert.type === "stale_access") &&
+                      payload.userId && payload.appId && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="shrink-0 text-xs h-7"
+                          disabled={revoking === alert.id}
+                          onClick={() => revokeAccess(alert.id, payload.userId as string, payload.appId as string)}
+                        >
+                          {revoking === alert.id ? "…" : "Revoke Access"}
+                        </Button>
+                      )}
                     <Button
                       size="sm"
                       variant="outline"

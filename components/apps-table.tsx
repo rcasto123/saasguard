@@ -47,7 +47,23 @@ export function AppsTable({ data }: { data: AppRow[] }) {
             ))}
           </tbody>
         </table>
-        {table.getRowModel().rows.length === 0 && <div className="text-center py-8 text-slate-400 text-sm">No apps found</div>}
+        {table.getRowModel().rows.length === 0 && (
+          <div className="text-center py-12 text-slate-400">
+            <p className="text-sm font-medium text-slate-600 mb-1">
+              {globalFilter ? "No apps match your search" : "No apps discovered yet"}
+            </p>
+            {!globalFilter && (
+              <p className="text-xs text-slate-400 mb-3">
+                Connect Google Workspace, Microsoft 365, or Okta to start discovering shadow IT.
+              </p>
+            )}
+            {!globalFilter && (
+              <a href="/connectors" className="text-xs text-indigo-600 hover:underline font-medium">
+                Set up a connector →
+              </a>
+            )}
+          </div>
+        )}
       </div>
       <p className="text-xs text-slate-400">{table.getFilteredRowModel().rows.length} apps</p>
     </div>

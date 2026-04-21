@@ -1,5 +1,8 @@
 import { db } from "@/lib/db";
 import { getOnePasswordCredentials, listVaults, listVaultItems, extractDomainFromItem } from "@/lib/connectors/onepassword";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("sync-onepassword");
 
 export async function handleOnePasswordSync(connectorId: string) {
   const connector = await db.connector.findUniqueOrThrow({ where: { id: connectorId } });
@@ -26,5 +29,5 @@ export async function handleOnePasswordSync(connectorId: string) {
   }
 
   await db.connector.update({ where: { id: connectorId }, data: { lastSyncAt: new Date(), lastSyncStatus: "success", status: "active" } });
-  console.log(`[sync-1password] Done. ${targetVaults.length} vaults synced.`);
+  log.info({ vaults: targetVaults.length }, "sync complete");
 }

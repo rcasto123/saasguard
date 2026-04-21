@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { INACTIVE_ACCESS_DAYS } from "@/lib/constants";
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
     take: 200,
   });
 
-  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-  const withStaleFlag = appUsers.map((au) => ({ ...au, isStale: au.lastSeen < ninetyDaysAgo }));
+  const inactiveCutoff = new Date(Date.now() - INACTIVE_ACCESS_DAYS * 24 * 60 * 60 * 1000);
+  const withStaleFlag = appUsers.map((au) => ({ ...au, isStale: au.lastSeen < inactiveCutoff }));
   return NextResponse.json(withStaleFlag);
 }
