@@ -13,8 +13,12 @@ export default async function LoginPage({
   const params = await searchParams;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <div className="bg-white rounded-xl border border-slate-200 p-8 w-full max-w-sm shadow-sm">
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: "url('/login-bg.png')" }}
+    >
+      <div className="absolute inset-0 bg-black/40" />
+      <div className="relative z-10 bg-white rounded-xl border border-slate-200 p-8 w-full max-w-sm shadow-sm">
         <div className="flex items-center gap-2 mb-6">
           <Shield className="w-6 h-6 text-indigo-500" />
           <span className="text-xl font-bold text-slate-900">SaaSGuard</span>
