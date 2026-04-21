@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Shield, Search, Package, DollarSign, Key, Plug, Settings, LayoutDashboard, Users, Mail, UsersRound } from "lucide-react";
+import { Shield, Search, Package, DollarSign, Key, Plug, Settings, LayoutDashboard, Users, Mail, UsersRound, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@prisma/client";
 
@@ -22,6 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/inventory", label: "App Inventory", icon: Package, roles: ["admin", "finance", "manager"] },
   { href: "/spend", label: "Spend", icon: DollarSign, roles: ["admin", "finance", "manager"] },
   { href: "/access", label: "Access", icon: Key, roles: ["admin", "manager"] },
+  { href: "/alerts", label: "Alerts", icon: Bell, roles: ["admin"] },
   { href: "/connectors", label: "Connectors", icon: Plug, roles: ["admin"] },
   { href: "/admin/users", label: "Manage Users", icon: Users, roles: ["admin"] },
   { href: "/admin/invites", label: "Invites", icon: Mail, roles: ["admin"] },
